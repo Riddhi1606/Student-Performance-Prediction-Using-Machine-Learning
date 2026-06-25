@@ -123,6 +123,9 @@ Student-Performance-Prediction/
 
 │ └── Student_Performance_Prediction.ipynb
 
+├── model/
+
+│ └── xgboost_student_model.pkl
 
 ├── report/
 
