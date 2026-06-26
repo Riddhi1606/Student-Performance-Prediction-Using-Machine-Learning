@@ -19,11 +19,71 @@ Developed using:
 """
 )
 
+st.sidebar.title("📌 Project Information")
+
+st.sidebar.write("""
+### Machine Learning Model
+
+- XGBoost Regressor
+
+### Dataset Features
+
+- Academic
+- Attendance
+- Sleep
+- Engagement
+- Parent Education
+
+### Technologies
+
+- Python
+- Streamlit
+- Scikit-learn
+- XGBoost
+""")
+
+with st.expander("📖 About this Project"):
+
+    st.write("""
+This project predicts student academic performance
+using Machine Learning.
+
+The model was trained using student-related
+features like attendance, study hours,
+previous score and engagement.
+""")
+
 st.set_page_config(
     page_title="Student Performance Prediction",
     page_icon="🎓",
     layout="centered"
 )
+
+st.title("🎓 Student Performance Prediction System")
+
+st.markdown("""
+### Predict a student's final marks using Machine Learning
+
+This application uses an **XGBoost Regressor** trained on student academic and behavioral data to estimate a student's final marks.
+
+👨‍💻 Developed using **Python, Streamlit, Scikit-learn and XGBoost**
+""")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    # Gender
+    # School Type
+    # Study Hours
+    # Attendance
+    # Sleep Hours
+
+with col2:
+    # Previous Score
+    # Parent Education
+    # Engagement Score
+    # Study Effectiveness
+    # Sleep Study Ratio
 
 # Load model
 model = joblib.load("xgboost_student_model.pkl")
@@ -145,3 +205,28 @@ if st.button("Predict Final Marks"):
 )
 
 st.balloons()
+
+st.success(f"🎯 Predicted Final Marks: {prediction[0]:.2f}/100")
+
+st.progress(min(int(prediction[0]), 100))
+
+st.markdown("---")
+
+st.caption(
+    "Developed by Team Bug Slayers | AI & Machine Learning Project"
+)
+
+if st.button("🚀 Predict Final Marks"):
+
+    with st.spinner("Predicting..."):
+
+        prediction = model.predict(data)
+
+    st.success(
+        f"🎯 Predicted Final Marks: {prediction[0]:.2f}"
+    )
+
+st.subheader("Student Details")
+
+st.write(data)
+
