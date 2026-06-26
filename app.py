@@ -72,18 +72,45 @@ This application uses an **XGBoost Regressor** trained on student academic and b
 col1, col2 = st.columns(2)
 
 with col1:
-    # Gender
-    # School Type
-    # Study Hours
-    # Attendance
-    # Sleep Hours
+    gender_option = st.selectbox("Gender", ["Male", "Female"])
+    gender = 0 if gender_option == "Male" else 1
+
+    school_option = st.selectbox("School Type", ["Public", "Private"])
+    school_type = 0 if school_option == "Public" else 1
+
+    study_hours_daily = st.number_input("Study Hours Daily", 0.0, 1.0, 0.5)
+
+    attendance_pct = st.number_input("Attendance %", 0.0, 1.0, 0.5)
+
+    sleep_hours = st.number_input("Sleep Hours", 0.0, 1.0, 0.5)
 
 with col2:
-    # Previous Score
-    # Parent Education
-    # Engagement Score
-    # Study Effectiveness
-    # Sleep Study Ratio
+    previous_score = st.number_input("Previous Score", 0, 100, 50)
+
+    extra_option = st.selectbox(
+        "Participates in Extracurricular Activities?",
+        ["No", "Yes"]
+    )
+    extracurricular = 0 if extra_option == "No" else 1
+
+    parent_option = st.selectbox(
+        "Parent Education",
+        ["High School", "Graduate", "Post Graduate"]
+    )
+
+    parent_map = {
+        "High School": 0,
+        "Graduate": 1,
+        "Post Graduate": 2
+    }
+
+    parent_education = parent_map[parent_option]
+
+    study_effectiveness = st.number_input("Study Effectiveness", 0.0, 1.0, 0.5)
+
+    sleep_study_ratio = st.number_input("Sleep Study Ratio", 0.0, 5.0, 1.0)
+
+    engagement_score = st.number_input("Engagement Score", 0.0, 1.0, 0.5)
 
 # Load model
 model = joblib.load("xgboost_student_model.pkl")
