@@ -28,6 +28,7 @@ st.markdown("""
 
 # ---------------- LOAD MODEL ----------------
 model = joblib.load("xgboost_student_model.pkl")
+scaler = joblib.load("scaler.pkl")
 
 # ---------------- HEADER ----------------
 st.markdown('<div class="big-title">🎓 Student Performance Prediction System</div>', unsafe_allow_html=True)
@@ -57,7 +58,7 @@ with col1:
     school_type = 0 if school_label == "Public" else 1
 
     study_hours_daily = st.slider("📖 Study Hours Daily", 0, 12, 5)
-    attendance_pct = st.slider("📅 Attendance %", 0, 100, 75) / 100
+    attendance_pct = st.slider("📅 Attendance %", 0, 100, 75)
 
 with col2:
     sleep_hours = st.slider("😴 Sleep Hours", 0, 12, 7)
@@ -114,6 +115,17 @@ st.plotly_chart(fig_radar, use_container_width=True)
 # ---------------- PREDICTION ----------------
 st.markdown("---")
 predict_btn = st.button("🚀 Predict Final Marks", use_container_width=True)
+scaled_values = scaler.transform(
+    [[
+        study_hours_daily,
+        attendance_pct,
+        sleep_hours
+    ]]
+)
+
+study_hours_daily = scaled_values[0][0]
+attendance_pct = scaled_values[0][1]
+sleep_hours = scaled_values[0][2]
 
 if predict_btn:
     input_data = pd.DataFrame({
@@ -290,4 +302,4 @@ if predict_btn:
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.caption("Developed by Team Bug Slayers 🐛 | AI & ML Project | Arya College of Engineering & IT")
+st.caption("Developed by Team Bug Slayers 🐛 | AI & ML Project")
