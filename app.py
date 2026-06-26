@@ -109,4 +109,4 @@ if st.button("🚀 Predict Final Marks"):
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.caption("Developed by Team Bug Slayers | AI & ML Hackathon Project")
+st.caption("Developed by Team Bug Slayers | AI & ML Project")
