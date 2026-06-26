@@ -58,7 +58,7 @@ with col1:
     school_type = 0 if school_label == "Public" else 1
 
     study_hours_daily = st.slider("📖 Study Hours Daily", 0, 12, 5)
-    attendance_pct = st.slider("📅 Attendance %", 0, 100, 75)
+    attendance_pct = st.slider("📅 Attendance %", 0, 100, 75)/100
 
 with col2:
     sleep_hours = st.slider("😴 Sleep Hours", 0, 12, 7)
