@@ -43,7 +43,7 @@ st.sidebar.info("""
 """)
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Team Bug Slayers** 🐛")
-st.sidebar.markdown("AI & ML Project | 2025")
+st.sidebar.markdown("AI & ML Project")
 
 # ---------------- INPUT UI ----------------
 st.markdown("### 📝 Enter Student Details")
