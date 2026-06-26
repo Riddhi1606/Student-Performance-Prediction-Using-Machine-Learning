@@ -36,12 +36,6 @@ features like attendance, study hours,
 previous score and engagement.
 """)
 
-st.set_page_config(
-    page_title="Student Performance Prediction",
-    page_icon="🎓",
-    layout="centered"
-)
-
 st.title("🎓 Student Performance Prediction System")
 
 st.markdown("""
@@ -97,17 +91,6 @@ with col2:
 
 # Load model
 model = joblib.load("xgboost_student_model.pkl")
-
-st.title("🎓 Student Performance Prediction System")
-
-st.write("Enter student details to predict final marks")
-
-st.write(
-    """
-    This application predicts student final marks using an XGBoost Machine Learning model.
-    Enter the student's details below and click **Predict Final Marks**.
-    """
-)
 
 gender_option = st.selectbox(
     "Gender",
@@ -210,12 +193,7 @@ if st.button("Predict Final Marks"):
 
     prediction = model.predict(data)
 
-    st.success(
-    f"🎯 Predicted Final Marks: {prediction[0]:.2f}"
-)
-
-st.balloons()
-
+    
 st.success(f"🎯 Predicted Final Marks: {prediction[0]:.2f}/100")
 
 st.progress(min(int(prediction[0]), 100))
