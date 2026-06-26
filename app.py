@@ -2,15 +2,56 @@ import streamlit as st
 import pandas as pd
 import joblib
 
+st.sidebar.title("About")
+
+st.sidebar.info(
+"""
+Student Performance Prediction
+
+Model Used:
+• XGBoost Regressor
+
+Developed using:
+• Python
+• Streamlit
+• Scikit-learn
+• XGBoost
+"""
+)
+
+st.set_page_config(
+    page_title="Student Performance Prediction",
+    page_icon="🎓",
+    layout="centered"
+)
+
 # Load model
 model = joblib.load("xgboost_student_model.pkl")
 
-st.title("Student Performance Prediction")
+st.title("🎓 Student Performance Prediction System")
 
 st.write("Enter student details to predict final marks")
 
-gender = st.selectbox("Gender", [0, 1])
-school_type = st.selectbox("School Type", [0, 1])
+st.write(
+    """
+    This application predicts student final marks using an XGBoost Machine Learning model.
+    Enter the student's details below and click **Predict Final Marks**.
+    """
+)
+
+gender_option = st.selectbox(
+    "Gender",
+    ["Male", "Female"]
+)
+
+gender = 0 if gender_option == "Male" else 1
+
+school_option = st.selectbox(
+    "School Type",
+    ["Public", "Private"]
+)
+
+school_type = 0 if school_option == "Public" else 1
 
 study_hours_daily = st.number_input(
     "Study Hours Daily",
@@ -40,15 +81,25 @@ previous_score = st.number_input(
     value=50
 )
 
-extracurricular = st.selectbox(
-    "Extracurricular Activities",
-    [0, 1]
+extra_option = st.selectbox(
+    "Participates in Extracurricular Activities?",
+    ["No", "Yes"]
 )
 
-parent_education = st.selectbox(
+extracurricular = 0 if extra_option == "No" else 1
+
+parent_option = st.selectbox(
     "Parent Education",
-    [0, 1, 2]
+    ["High School", "Graduate", "Post Graduate"]
 )
+
+parent_map = {
+    "High School":0,
+    "Graduate":1,
+    "Post Graduate":2
+}
+
+parent_education = parent_map[parent_option]
 
 study_effectiveness = st.number_input(
     "Study Effectiveness",
@@ -90,5 +141,7 @@ if st.button("Predict Final Marks"):
     prediction = model.predict(data)
 
     st.success(
-        f"Predicted Final Marks: {prediction[0]:.2f}"
-    )
+    f"🎯 Predicted Final Marks: {prediction[0]:.2f}"
+)
+
+st.balloons()
