@@ -2,23 +2,6 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-st.sidebar.title("About")
-
-st.sidebar.info(
-"""
-Student Performance Prediction
-
-Model Used:
-• XGBoost Regressor
-
-Developed using:
-• Python
-• Streamlit
-• Scikit-learn
-• XGBoost
-"""
-)
-
 st.sidebar.title("📌 Project Information")
 
 st.sidebar.write("""
