@@ -133,7 +133,7 @@ st.sidebar.markdown("""
 """)
 st.sidebar.markdown("---")
 st.sidebar.markdown("**👩‍💻 Developed by Team Bug Slayers 🐛**")
-st.sidebar.caption("AI & Data Science Project")
+st.sidebar.caption("AI & ML Project")
 
 # ---------------- INPUT SECTION ----------------
 st.markdown('<div class="section-header">📝 Enter Student Details</div>', unsafe_allow_html=True)
@@ -415,4 +415,4 @@ col_f1, col_f2 = st.columns(2)
 with col_f1:
     st.caption("🐛 **Team Bug Slayers**")
 with col_f2:
-    st.caption("🤖 AI & Data Science Project")
+    st.caption("🤖 AI & ML Project")
