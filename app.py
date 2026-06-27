@@ -46,6 +46,25 @@ scaler = joblib.load("scaler.pkl")
 def minmax_scale(study_hours, attendance, sleep):
     scaled = scaler.transform([[study_hours, attendance, sleep]])
     return scaled[0][0], scaled[0][1], scaled[0][2]
+    
+# TEMPORARY DEBUG - remove after fixing
+st.sidebar.markdown("### 🔍 Debug Info")
+st.sidebar.write("Scaler min:", scaler.data_min_)
+st.sidebar.write("Scaler max:", scaler.data_max_)
+test_scaled = scaler.transform([[11.0, 100.0, 10.0]])
+test_input = pd.DataFrame({
+    "gender": [1], "school_type": [1],
+    "study_hours_daily": [test_scaled[0][0]],
+    "attendance_pct": [test_scaled[0][1]],
+    "sleep_hours": [test_scaled[0][2]],
+    "previous_score": [95], "extracurricular": [1],
+    "parent_education": [2],
+    "study_effectiveness": [test_scaled[0][0]*test_scaled[0][1]],
+    "sleep_study_ratio": [test_scaled[0][2]/max(test_scaled[0][0],0.001)],
+    "engagement_score": [test_scaled[0][0]*0.5 + test_scaled[0][1]*0.3 + 0.2]
+})
+st.sidebar.write("Test prediction (should be ~97):", 
+    round(float(model.predict(test_input)[0])))
 
 # ---------------- HEADER ----------------
 st.markdown('<div class="big-title">🎓 Student Performance Prediction System</div>', unsafe_allow_html=True)
