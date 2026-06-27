@@ -71,8 +71,20 @@ st.sidebar.markdown("### 📊 Model Performance")
 st.sidebar.success("R² Score: **0.97**")
 st.sidebar.info("MAE: **~2.1**")
 st.sidebar.markdown("---")
+st.sidebar.markdown("### 📋 Score Guide")
+st.sidebar.markdown("""
+| Grade | Marks |
+|-------|-------|
+| A+    | 85+   |
+| A     | 75–84 |
+| B     | 65–74 |
+| C     | 55–64 |
+| D     | 45–54 |
+| F     | < 45  |
+""")
+st.sidebar.markdown("---")
 st.sidebar.markdown("**👩‍💻 Developed by Team Bug Slayers 🐛**")
-st.sidebar.caption("AI & Data Science Project | Arya College of Engineering & IT")
+st.sidebar.caption("AI & Data Science Project")
 
 # ---------------- INPUT SECTION ----------------
 st.markdown('<div class="section-header">📝 Enter Student Details</div>', unsafe_allow_html=True)
@@ -96,10 +108,10 @@ with col1:
 
 with col2:
     st.markdown("**📚 Academic Info**")
-    previous_score  = st.slider("Previous Score", 20, 95, 60)
-    study_hours_raw = st.slider("Study Hours Daily", 1, 11, 5)
-    attendance_raw  = st.slider("Attendance %", 40, 100, 75)
-    sleep_hours_raw = st.slider("Sleep Hours", 4, 10, 7)
+    previous_score  = st.slider("Previous Score",   20,  95, 60)
+    study_hours_raw = st.slider("Study Hours Daily", 1,  11,  5)
+    attendance_raw  = st.slider("Attendance %",     40, 100, 75)
+    sleep_hours_raw = st.slider("Sleep Hours",       4,  10,  7)
 
 with col3:
     st.markdown("**📊 Live Input Summary**")
@@ -179,33 +191,32 @@ if predict_btn:
     prediction_int = int(round(prediction))
 
     # ---------------- PREDICTION INDEX ----------------
-    # Weighted score of all input factors normalized to 0-100
     prediction_index = int(round(
-        (study_hours_raw / 11) * 25 +
-        (attendance_raw  / 100) * 25 +
-        (previous_score  / 95) * 30 +
-        (sleep_hours_raw / 10) * 10 +
-        extracurricular        * 5  +
-        (parent_education / 2) * 5
+        (study_hours_raw / 11)   * 25 +
+        (attendance_raw  / 100)  * 25 +
+        (previous_score  / 95)   * 30 +
+        (sleep_hours_raw / 10)   * 10 +
+        extracurricular          *  5 +
+        (parent_education / 2)   *  5
     ))
     prediction_index = max(0, min(100, prediction_index))
 
-    # ---------------- RESULTS ----------------
-    st.markdown('<div class="section-header">🎯 Prediction Results</div>', unsafe_allow_html=True)
-
-    # Grade & color
-    if prediction_int >= 90:
+    # ---------------- GRADE (adjusted for dataset range 10-98, mean=60) ----------------
+    if prediction_int >= 85:
         grade, grade_color = "A+", "linear-gradient(135deg,#11998e,#38ef7d)"
-    elif prediction_int >= 80:
+    elif prediction_int >= 75:
         grade, grade_color = "A",  "linear-gradient(135deg,#56ab2f,#a8e063)"
-    elif prediction_int >= 70:
+    elif prediction_int >= 65:
         grade, grade_color = "B",  "linear-gradient(135deg,#1f77b4,#4facfe)"
-    elif prediction_int >= 60:
+    elif prediction_int >= 55:
         grade, grade_color = "C",  "linear-gradient(135deg,#f7971e,#ffd200)"
-    elif prediction_int >= 50:
+    elif prediction_int >= 45:
         grade, grade_color = "D",  "linear-gradient(135deg,#f37335,#fda085)"
     else:
         grade, grade_color = "F",  "linear-gradient(135deg,#cb2d3e,#ef473a)"
+
+    # ---------------- RESULTS ----------------
+    st.markdown('<div class="section-header">🎯 Prediction Results</div>', unsafe_allow_html=True)
 
     r1, r2, r3 = st.columns(3)
     with r1:
@@ -230,31 +241,32 @@ if predict_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.progress(prediction_int)
 
-    if prediction_int >= 90:
-        st.success("🏆 **Excellent Performance** — Outstanding result! Keep it up!")
-    elif prediction_int >= 75:
+    # ---------------- PERFORMANCE CATEGORY (adjusted for dataset mean=60) ----------------
+    if prediction_int >= 85:
+        st.success("🏆 **Excellent Performance** — Outstanding result! You are in the top tier!")
+    elif prediction_int >= 70:
         st.info("🌟 **Good Performance** — Strong result! A little more effort for excellence.")
-    elif prediction_int >= 50:
-        st.warning("📚 **Average Performance** — There is room for improvement. Focus on weak areas.")
+    elif prediction_int >= 55:
+        st.warning("📚 **Average Performance** — Above the mean. Focus on weak areas to improve.")
     else:
-        st.error("⚠️ **Needs Improvement** — Please seek additional support and increase study time.")
+        st.error("⚠️ **Needs Improvement** — Below average. Please increase study time and attendance.")
 
     # ---------------- SCORE GAUGE ----------------
     st.markdown('<div class="section-header">📉 Score Gauge</div>', unsafe_allow_html=True)
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=prediction_int,
-        delta={'reference': 70, 'increasing': {'color': "green"}, 'decreasing': {'color': "red"}},
+        delta={'reference': 60, 'increasing': {'color': "green"}, 'decreasing': {'color': "red"}},
         gauge={
             'axis': {'range': [0, 100], 'tickwidth': 1},
             'bar': {'color': "#667eea", 'thickness': 0.3},
             'steps': [
-                {'range': [0,  50], 'color': "#ffcccc"},
-                {'range': [50, 75], 'color': "#fff3cd"},
-                {'range': [75, 90], 'color': "#cce5ff"},
-                {'range': [90,100], 'color': "#d4edda"},
+                {'range': [0,  45], 'color': "#ffcccc"},
+                {'range': [45, 65], 'color': "#fff3cd"},
+                {'range': [65, 85], 'color': "#cce5ff"},
+                {'range': [85,100], 'color': "#d4edda"},
             ],
-            'threshold': {'line': {'color': "red", 'width': 3}, 'thickness': 0.75, 'value': 50}
+            'threshold': {'line': {'color': "red", 'width': 3}, 'thickness': 0.75, 'value': 45}
         },
         title={'text': f"Predicted Score: {prediction_int}/100", 'font': {'size': 16}}
     ))
@@ -292,7 +304,7 @@ if predict_btn:
     elif study_hours_raw >= 4:
         explanations.append(("⚠️", "**Study Hours are moderate** — Increasing daily study time could significantly improve the score."))
     else:
-        explanations.append(("❌", "**Study Hours are very low** — This is the primary reason for a low prediction. Study more daily."))
+        explanations.append(("❌", "**Study Hours are very low** — This is a primary reason for a low prediction. Study more daily."))
 
     if attendance_raw >= 85:
         explanations.append(("✅", "**Excellent attendance** — High attendance correlates strongly with better understanding and marks."))
@@ -304,7 +316,7 @@ if predict_btn:
     if previous_score >= 70:
         explanations.append(("✅", "**Strong previous score** — Past performance shows consistent academic ability."))
     elif previous_score >= 50:
-        explanations.append(("⚠️", "**Average previous score** — Indicates potential but suggests inconsistency that needs to be addressed."))
+        explanations.append(("⚠️", "**Average previous score** — Indicates potential but suggests inconsistency that needs addressing."))
     else:
         explanations.append(("❌", "**Low previous score** — This is weighing down the prediction. Targeted revision of past topics is essential."))
 
@@ -323,7 +335,7 @@ if predict_btn:
     if parent_education >= 2:
         explanations.append(("✅", "**Highly educated parents** — Supportive academic home environment is a positive influence."))
     elif parent_education == 1:
-        explanations.append(("ℹ️", "**Moderate parent education** — Moderate home academic support available."))
+        explanations.append(("ℹ️", "**Moderate parent education** — Some home academic support available."))
     else:
         explanations.append(("ℹ️", "**Limited parent education** — Student is self-driven; access to additional resources is recommended."))
 
@@ -350,16 +362,11 @@ if predict_btn:
         })
         st.dataframe(display_df, use_container_width=True, hide_index=True)
         st.caption("* Engineered features computed from scaled values — matches exact notebook pipeline.")
-        st.info(
-    "Predictions are generated using an XGBoost regression model trained on student performance data."
-)
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-col_f1, col_f2, col_f3 = st.columns(3)
+col_f1, col_f2 = st.columns(2)
 with col_f1:
     st.caption("🐛 **Team Bug Slayers**")
 with col_f2:
-    st.caption("🎓 Arya College of Engineering & IT")
-with col_f3:
-    st.caption("🤖 AI & Data Science Project | 2025")
+    st.caption("🤖 AI & Data Science Project")
