@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.model_selection import train_test_split
+from xgboost import XGBRegressor
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -39,32 +41,60 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- LOAD MODEL & SCALER ----------------
-model  = joblib.load("xgboost_student_model.pkl")
-scaler = joblib.load("scaler.pkl")
+# ---------------- TRAIN MODEL ON STARTUP ----------------
+@st.cache_resource
+def load_model():
+    df = pd.read_csv("Student_Performance_Dataset.csv")
 
-def minmax_scale(study_hours, attendance, sleep):
-    scaled = scaler.transform([[study_hours, attendance, sleep]])
+    # Fill missing values
+    df['study_hours_daily'] = df['study_hours_daily'].fillna(df['study_hours_daily'].median())
+    df['attendance_pct']    = df['attendance_pct'].fillna(df['attendance_pct'].mean())
+    df['parent_education']  = df['parent_education'].fillna(df['parent_education'].mode()[0])
+
+    # Encode categorical columns
+    le = LabelEncoder()
+    df['gender']      = le.fit_transform(df['gender'])       # Female=0, Male=1
+    df['school_type'] = le.fit_transform(df['school_type'])  # Private=0, Public=1
+
+    # Parent education mapping
+    parent_map = {'None': 0, 'Grad': 1, 'PG': 2}
+    df['parent_education'] = df['parent_education'].map(parent_map)
+
+    # Scale numeric features
+    scaler   = MinMaxScaler()
+    num_cols = ['study_hours_daily', 'attendance_pct', 'sleep_hours']
+    df[num_cols] = scaler.fit_transform(df[num_cols])
+
+    # Feature engineering AFTER scaling
+    df['study_effectiveness'] = df['study_hours_daily'] * df['attendance_pct']
+    df['sleep_study_ratio']   = df['sleep_hours'] / df['study_hours_daily'].replace(0, 0.001)
+    df['engagement_score']    = df['study_hours_daily']*0.5 + df['attendance_pct']*0.3 + df['extracurricular']*0.2
+
+    # Train model
+    X = df.drop(columns=['student_id', 'final_marks'])
+    y = df['final_marks']
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    model = XGBRegressor(
+        n_estimators=200, learning_rate=0.05,
+        max_depth=6, subsample=0.8,
+        colsample_bytree=0.8, random_state=42
+    )
+    model.fit(X_train, y_train)
+
+    return model, scaler
+
+# Load model (cached - only trains once)
+with st.spinner("🔄 Loading model... Please wait"):
+    model, scaler = load_model()
+
+def scale_inputs(study_hours, attendance, sleep):
+    scaled = scaler.transform(
+        pd.DataFrame([[study_hours, attendance, sleep]],
+        columns=['study_hours_daily', 'attendance_pct', 'sleep_hours'])
+    )
     return scaled[0][0], scaled[0][1], scaled[0][2]
-    
-# TEMPORARY DEBUG - remove after fixing
-st.sidebar.markdown("### 🔍 Debug Info")
-st.sidebar.write("Scaler min:", scaler.data_min_)
-st.sidebar.write("Scaler max:", scaler.data_max_)
-test_scaled = scaler.transform([[11.0, 100.0, 10.0]])
-test_input = pd.DataFrame({
-    "gender": [1], "school_type": [1],
-    "study_hours_daily": [test_scaled[0][0]],
-    "attendance_pct": [test_scaled[0][1]],
-    "sleep_hours": [test_scaled[0][2]],
-    "previous_score": [95], "extracurricular": [1],
-    "parent_education": [2],
-    "study_effectiveness": [test_scaled[0][0]*test_scaled[0][1]],
-    "sleep_study_ratio": [test_scaled[0][2]/max(test_scaled[0][0],0.001)],
-    "engagement_score": [test_scaled[0][0]*0.5 + test_scaled[0][1]*0.3 + 0.2]
-})
-st.sidebar.write("Test prediction (should be ~97):", 
-    round(float(model.predict(test_input)[0])))
 
 # ---------------- HEADER ----------------
 st.markdown('<div class="big-title">🎓 Student Performance Prediction System</div>', unsafe_allow_html=True)
@@ -172,23 +202,23 @@ fig_radar.update_layout(
 )
 st.plotly_chart(fig_radar, use_container_width=True)
 
-# ---------------- PREDICTION BUTTON ----------------
+# ---------------- PREDICTION ----------------
 st.markdown("---")
 predict_btn = st.button("🚀 Predict Final Marks", use_container_width=True, type="primary")
 
 if predict_btn:
 
-    # Step 1 — Scale numeric features using saved scaler
-    study_scaled, attendance_scaled, sleep_scaled = minmax_scale(
+    # Scale inputs
+    study_scaled, attendance_scaled, sleep_scaled = scale_inputs(
         study_hours_raw, attendance_raw, sleep_hours_raw
     )
 
-    # Step 2 — Feature engineering on SCALED values (matches notebook exactly)
+    # Feature engineering on scaled values
     study_effectiveness = study_scaled * attendance_scaled
     sleep_study_ratio   = sleep_scaled / max(study_scaled, 0.001)
-    engagement_score    = study_scaled * 0.5 + attendance_scaled * 0.3 + extracurricular * 0.2
+    engagement_score    = study_scaled*0.5 + attendance_scaled*0.3 + extracurricular*0.2
 
-    # Step 3 — Build input dataframe in exact column order from notebook
+    # Build input dataframe
     input_data = pd.DataFrame({
         "gender":              [gender],
         "school_type":         [school_type],
@@ -209,18 +239,18 @@ if predict_btn:
 
     prediction_int = int(round(prediction))
 
-    # ---------------- PREDICTION INDEX ----------------
+    # Prediction Index
     prediction_index = int(round(
-        (study_hours_raw / 11)   * 25 +
-        (attendance_raw  / 100)  * 25 +
-        (previous_score  / 95)   * 30 +
-        (sleep_hours_raw / 10)   * 10 +
-        extracurricular          *  5 +
-        (parent_education / 2)   *  5
+        (study_hours_raw / 11)  * 25 +
+        (attendance_raw  / 100) * 25 +
+        (previous_score  / 95)  * 30 +
+        (sleep_hours_raw / 10)  * 10 +
+        extracurricular         *  5 +
+        (parent_education / 2)  *  5
     ))
     prediction_index = max(0, min(100, prediction_index))
 
-    # ---------------- GRADE (adjusted for dataset range 10-98, mean=60) ----------------
+    # Grade
     if prediction_int >= 85:
         grade, grade_color = "A+", "linear-gradient(135deg,#11998e,#38ef7d)"
     elif prediction_int >= 75:
@@ -234,7 +264,7 @@ if predict_btn:
     else:
         grade, grade_color = "F",  "linear-gradient(135deg,#cb2d3e,#ef473a)"
 
-    # ---------------- RESULTS ----------------
+    # Results
     st.markdown('<div class="section-header">🎯 Prediction Results</div>', unsafe_allow_html=True)
 
     r1, r2, r3 = st.columns(3)
@@ -260,7 +290,6 @@ if predict_btn:
     st.markdown("<br>", unsafe_allow_html=True)
     st.progress(prediction_int)
 
-    # ---------------- PERFORMANCE CATEGORY (adjusted for dataset mean=60) ----------------
     if prediction_int >= 85:
         st.success("🏆 **Excellent Performance** — Outstanding result! You are in the top tier!")
     elif prediction_int >= 70:
@@ -270,7 +299,7 @@ if predict_btn:
     else:
         st.error("⚠️ **Needs Improvement** — Below average. Please increase study time and attendance.")
 
-    # ---------------- SCORE GAUGE ----------------
+    # Score Gauge
     st.markdown('<div class="section-header">📉 Score Gauge</div>', unsafe_allow_html=True)
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number+delta",
@@ -292,7 +321,7 @@ if predict_btn:
     fig_gauge.update_layout(height=280, margin=dict(t=50, b=10))
     st.plotly_chart(fig_gauge, use_container_width=True)
 
-    # ---------------- FEATURE IMPORTANCE ----------------
+    # Feature Importance
     st.markdown('<div class="section-header">📈 Feature Importance</div>', unsafe_allow_html=True)
     feat_names = [
         "Gender", "School Type", "Study Hours", "Attendance %",
@@ -313,11 +342,10 @@ if predict_btn:
     fig_imp.update_layout(height=380, margin=dict(t=50, b=10), coloraxis_showscale=False)
     st.plotly_chart(fig_imp, use_container_width=True)
 
-    # ---------------- AI EXPLANATION ----------------
+    # AI Explanation
     st.markdown('<div class="section-header">🧠 AI Explanation — Why this prediction?</div>', unsafe_allow_html=True)
 
     explanations = []
-
     if study_hours_raw >= 7:
         explanations.append(("✅", "**Study Hours are high** — Consistent study time is the biggest driver of academic success."))
     elif study_hours_raw >= 4:
@@ -335,12 +363,12 @@ if predict_btn:
     if previous_score >= 70:
         explanations.append(("✅", "**Strong previous score** — Past performance shows consistent academic ability."))
     elif previous_score >= 50:
-        explanations.append(("⚠️", "**Average previous score** — Indicates potential but suggests inconsistency that needs addressing."))
+        explanations.append(("⚠️", "**Average previous score** — Indicates potential but suggests inconsistency."))
     else:
-        explanations.append(("❌", "**Low previous score** — This is weighing down the prediction. Targeted revision of past topics is essential."))
+        explanations.append(("❌", "**Low previous score** — This is weighing down the prediction. Revision of past topics is essential."))
 
     if sleep_hours_raw >= 7:
-        explanations.append(("✅", "**Adequate sleep** — Good sleep supports memory consolidation and focus during study."))
+        explanations.append(("✅", "**Adequate sleep** — Good sleep supports memory consolidation and focus."))
     elif sleep_hours_raw >= 6:
         explanations.append(("⚠️", "**Sleep is slightly low** — Aim for at least 7–8 hours for optimal brain performance."))
     else:
@@ -356,12 +384,11 @@ if predict_btn:
     elif parent_education == 1:
         explanations.append(("ℹ️", "**Moderate parent education** — Some home academic support available."))
     else:
-        explanations.append(("ℹ️", "**Limited parent education** — Student is self-driven; access to additional resources is recommended."))
+        explanations.append(("ℹ️", "**Limited parent education** — Student is self-driven; additional resources recommended."))
 
     for icon, text in explanations:
         st.markdown(f"{icon} {text}")
 
-    # ---------------- INPUT SUMMARY ----------------
     with st.expander("📋 View Processed Input Data"):
         display_df = pd.DataFrame({
             "Feature": [
@@ -370,7 +397,7 @@ if predict_btn:
                 "Parent Education", "Study Effectiveness*",
                 "Sleep/Study Ratio*", "Engagement Score*"
             ],
-            "Raw Value": [
+            "Value": [
                 gender_label, school_label, f"{study_hours_raw} hrs",
                 f"{attendance_raw}%", f"{sleep_hours_raw} hrs",
                 previous_score, extra_label, parent_label,
@@ -380,7 +407,7 @@ if predict_btn:
             ]
         })
         st.dataframe(display_df, use_container_width=True, hide_index=True)
-        st.caption("* Engineered features computed from scaled values — matches exact notebook pipeline.")
+        st.caption("* Engineered features computed from scaled values.")
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
