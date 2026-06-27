@@ -392,7 +392,7 @@ if predict_btn:
     else:
         grade, grade_color = "F",  "linear-gradient(135deg,#cb2d3e,#ef473a)"
 
-Prediction Index = min(int(50 + abs(prediction - 50)), 99)
+    Prediction Index = min(int(50 + abs(prediction - 50)), 99)
 
     r1, r2, r3 = st.columns(3)
     with r1:
