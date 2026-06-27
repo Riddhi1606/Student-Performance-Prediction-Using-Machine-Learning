@@ -40,8 +40,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------- LOAD MODEL & SCALER ----------------
-model  = joblib.load("xgboost_student_model(2).pkl")
-scaler = joblib.load("scaler(1).pkl")
+model  = joblib.load("xgboost_student_model.pkl")
+scaler = joblib.load("scaler.pkl")
 
 def minmax_scale(study_hours, attendance, sleep):
     scaled = scaler.transform([[study_hours, attendance, sleep]])
